@@ -15,3 +15,5 @@ foo.*
 bin/str
 nimble.develop
 nimble.paths
+
+bin/*
