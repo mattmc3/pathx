@@ -1,6 +1,6 @@
 # pathx
 
-A CLI tool for /p/a/t/h management
+pathx - The path eXtractor. A CLI tool for simple /p/a/t/h management.
 
 # WIP
 
