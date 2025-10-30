@@ -5,8 +5,12 @@ import ../src/pathx
 proc runPathx(args: seq[string]): tuple[code: int, outp: string, err: string] =
   var outBuf = ""
   var errBuf = ""
-  proc ow(s: string) = outBuf.add(s)
-  proc ew(s: string) = errBuf.add(s)
+  proc ow(s: string) =
+    outBuf.add(s)
+
+  proc ew(s: string) =
+    errBuf.add(s)
+
   var cmd = PathxCommand(outWriter: ow, errWriter: ew)
   result.code = cmd.pathx(args)
   result.outp = outBuf
@@ -14,13 +18,13 @@ proc runPathx(args: seq[string]): tuple[code: int, outp: string, err: string] =
 
 suite "pathx basic operations":
   test "requires at least one path":
-    let (code, _, err) = runPathx(@["-a"]) # no positional
+    let (code, _, err) = runPathx(@["-n"]) # no positional
     check code != 0
     check err.contains("No paths provided")
 
-  test "absolute + parent + name chain":
-    # -apn on foo/bar/file.txt -> absolute -> parent (foo/bar) -> name (bar)
-    let (code, outp, _) = runPathx(@["-apn", "foo/bar/file.txt"])
+  test "normalize + dirname + basename chain":
+    # -ndb on foo/bar/file.txt -> normalize -> dirname (foo/bar) -> basename (bar)
+    let (code, outp, _) = runPathx(@["-ndb", "foo/bar/file.txt"])
     check code == 0
     let lines = outp.strip.splitLines
     check lines.len == 1
@@ -40,11 +44,11 @@ suite "pathx basic operations":
     check outE.strip == ".gz"
     check outEE.strip == ".tar.gz"
 
-  test "parent then extension becomes empty":
-    # -pe: parent removes filename, extension of directory is empty
-    let (code, outp, _) = runPathx(@["-pe", "foo/bar.txt"])
+  test "dirname then extension becomes empty":
+    # -de: dirname removes filename, extension of directory is empty
+    let (code, outp, _) = runPathx(@["-de", "foo/bar.txt"])
     check code == 0
-    check outp == "\n"  # single empty line
+    check outp == "\n" # single empty line
 
   test "multiple positionals processed independently":
     let (code, outp, _) = runPathx(@["-e", "x/file.one.two", "y/another.txt", "plain"])
@@ -52,7 +56,7 @@ suite "pathx basic operations":
     let lines = outp.splitLines
     check lines[0] == ".two"
     check lines[1] == ".txt"
-    check lines[2] == ""  # no extension
+    check lines[2] == "" # no extension
 
   test "chained stem then extension on multi-ext file":
     # -se: stem first (remove final extension) then extension of remaining chain
